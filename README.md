@@ -15,7 +15,3 @@
   <img src="https://leetcard.jacoblin.cool/anandvsinh?theme=dark&font=Baloo+2&ext=heatmap" />
 </a>
 
-<div align="center">
-  <img src="https://profile-readme-generator.com/assets/snake.svg" alt="Snake animation" />
-</div>
-# anandvsinh

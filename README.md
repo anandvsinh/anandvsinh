@@ -11,7 +11,4 @@
   />
 </p>
 
-<a href="https://leetcode.com/anandvsinh/">
-  <img src="https://leetcard.jacoblin.cool/anandvsinh?theme=dark&font=Baloo+2&ext=heatmap" />
-</a>
 

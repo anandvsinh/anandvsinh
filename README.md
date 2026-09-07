@@ -1,7 +1,7 @@
 # Welcome to My Profile
 
 
-<h2 align="center">🟡 LeetCode</h2>
+<h2 align="center">LeetCode Dashboard</h2>
 
 <p align="center">
   <img

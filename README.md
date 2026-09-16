@@ -21,7 +21,7 @@
   <br>
   <img align="center"
     src="./assets/name.gif"
-    width="100%"
+    width="70%"
     alt="name-animation"/>
 </p>
 

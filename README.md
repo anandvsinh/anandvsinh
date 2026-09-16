@@ -18,6 +18,11 @@
     width="5%" 
     alt="anandvsinh-Linkedin"/>
   <br>
+  <br>
+  <img align="center"
+    src="./assets/name.gif"
+    width="100%"
+    alt="name-animation"/>
 </p>
 
 

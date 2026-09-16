@@ -15,7 +15,7 @@
   <img 
     src="./assets/linkedin.gif" 
     href="https://linkedin.com/in/anandvsinh"
-    width="20%" 
+    width="5%" 
     alt="anandvsinh-Linkedin"/>
 </p>
 

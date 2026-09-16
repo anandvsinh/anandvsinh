@@ -12,7 +12,9 @@
   <br>
   <br>
   <br>
-  <lnkdin href="httpss://linkedin.com/in/anandvsinh" src="./linkedin.gif" width="100%" alt="anandvsinh-Linkedin"></lnkdin>
+  <lnkdin href="httpss://linkedin.com/in/anandvsinh" 
+    src="./assets/linkedin.gif" 
+    width="100%" alt="anandvsinh-Linkedin"/>
 </p>
 
 

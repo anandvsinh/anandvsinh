@@ -18,7 +18,6 @@
     width="5%" 
     alt="anandvsinh-Linkedin"/>
   <br>
-  <button type="button" >Don't Click !</button>
 </p>
 
 

@@ -4,17 +4,18 @@
 <h2 align="center">LeetCode Dashboard</h2>
 
 <p align="center">
-  <!-- <img
+  <img
     src="./assets/leetcode-pacman.gif"
     width="100%"
     alt="Pac-Man eating my LeetCode activity"
-  /> -->
+  />
   <br>
   <br>
   <br>
-  <lnkdin href="httpss://linkedin.com/in/anandvsinh" 
+  <img 
     src="./assets/linkedin.gif" 
-    width="100%" alt="anandvsinh-Linkedin"/>
+    width="100%" 
+    alt="anandvsinh-Linkedin"/>
 </p>
 
 

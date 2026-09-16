@@ -12,7 +12,7 @@
   <br>
   <br>
   <br>
-  <img 
+  <img align="left"
     src="./assets/linkedin.gif" 
     href="https://linkedin.com/in/anandvsinh"
     width="5%" 

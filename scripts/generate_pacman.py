@@ -19,19 +19,21 @@ HEIGHT = 500
 
 BG = (7, 10, 15)
 PANEL = (12, 17, 25)
+
 GRID_EMPTY = (20, 28, 38)
 
-GREEN_1 = (25, 110, 55)
-GREEN_2 = (30, 170, 70)
+GREEN_1 = (25, 105, 52)
+GREEN_2 = (30, 165, 70)
 GREEN_3 = (45, 220, 90)
 
 YELLOW = (255, 215, 0)
 YELLOW_BRIGHT = (255, 235, 60)
 
 WHITE = (240, 245, 250)
-MUTED = (120, 135, 155)
+MUTED = (115, 130, 150)
 
-BLUE = (40, 100, 220)
+BLUE = (45, 100, 210)
+
 RED = (245, 70, 70)
 PINK = (235, 80, 160)
 CYAN = (50, 210, 230)
@@ -42,17 +44,18 @@ CYAN = (50, 210, 230)
 # ============================================================
 
 def load_font(size, bold=False):
+
     candidates = []
 
     if bold:
-        candidates += [
-            "C:/Windows/Fonts/arialbd.ttf",
+        candidates = [
             "C:/Windows/Fonts/consolab.ttf",
+            "C:/Windows/Fonts/arialbd.ttf",
         ]
     else:
-        candidates += [
-            "C:/Windows/Fonts/arial.ttf",
+        candidates = [
             "C:/Windows/Fonts/consola.ttf",
+            "C:/Windows/Fonts/arial.ttf",
         ]
 
     for path in candidates:
@@ -65,14 +68,14 @@ def load_font(size, bold=False):
 
 
 FONT_TITLE = load_font(42, True)
-FONT_SUBTITLE = load_font(20, True)
-FONT_NORMAL = load_font(17)
-FONT_SMALL = load_font(14)
-FONT_STATS = load_font(27, True)
+FONT_SUBTITLE = load_font(19, True)
+FONT_NORMAL = load_font(16)
+FONT_SMALL = load_font(13)
+FONT_STATS = load_font(25, True)
 
 
 # ============================================================
-# LOAD DATA
+# LOAD LEETCODE DATA
 # ============================================================
 
 if not DATA_FILE.exists():
@@ -81,21 +84,24 @@ if not DATA_FILE.exists():
         "Run fetch_leetcode.py first."
     )
 
+
 with open(DATA_FILE, "r", encoding="utf-8") as f:
     data = json.load(f)
 
+
 username = data["username"]
 year = int(data["year"])
+
 streak = int(data["streak"])
 active_days = int(data["total_active_days"])
 
 raw_calendar = data["submission_calendar"]
 
 
-# Convert Unix timestamps to date -> submissions
 calendar = {}
 
 for timestamp, count in raw_calendar.items():
+
     timestamp = int(timestamp)
 
     date = datetime.fromtimestamp(
@@ -107,44 +113,54 @@ for timestamp, count in raw_calendar.items():
 
 
 # ============================================================
-# CALENDAR GRID
+# CALENDAR
 # ============================================================
 
-start_date = datetime(year, 1, 1, tzinfo=timezone.utc).date()
-end_date = datetime(year, 12, 31, tzinfo=timezone.utc).date()
+start_date = datetime(
+    year,
+    1,
+    1,
+    tzinfo=timezone.utc
+).date()
 
-# Find Monday before/at Jan 1
+end_date = datetime(
+    year,
+    12,
+    31,
+    tzinfo=timezone.utc
+).date()
+
+
 grid_start = start_date - timedelta(
     days=start_date.weekday()
 )
 
-# Find Sunday after/at Dec 31
 grid_end = end_date + timedelta(
     days=6 - end_date.weekday()
 )
+
 
 dates = []
 
 current = grid_start
 
 while current <= grid_end:
+
     dates.append(current)
+
     current += timedelta(days=1)
 
 
-# 7 rows × number of weeks
-weeks = math.ceil(len(dates) / 7)
-
-# Grid positioning
-GRID_X = 90
-GRID_Y = 175
-
-CELL = 16
+CELL = 17
 GAP = 5
 STEP = CELL + GAP
 
+GRID_X = 90
+GRID_Y = 175
+
 
 def cell_position(date):
+
     index = (date - grid_start).days
 
     week = index // 7
@@ -157,78 +173,114 @@ def cell_position(date):
 
 
 # ============================================================
-# FIND CURRENT STREAK DAYS
+# CURRENT STREAK
 # ============================================================
 
-active_dates = set(
-    date for date, count in calendar.items()
+active_dates = {
+    date
+    for date, count in calendar.items()
     if count > 0
-)
+}
+
 
 streak_dates = set()
 
 cursor = end_date
 
 while cursor in active_dates:
+
     streak_dates.add(cursor)
+
     cursor -= timedelta(days=1)
 
 
 # ============================================================
-# DRAW HELPERS
+# DRAW PAC-MAN
 # ============================================================
 
-def rounded_rect(draw, xy, radius, fill, outline=None, width=1):
-    draw.rounded_rectangle(
-        xy,
-        radius=radius,
-        fill=fill,
-        outline=outline,
-        width=width
-    )
+def draw_pacman(
+    draw,
+    cx,
+    cy,
+    direction,
+    frame
+):
 
-
-def draw_pacman(draw, cx, cy, frame):
     radius = 11
 
     # Mouth animation
-    mouth = 18 + int(
-        18 * abs(math.sin(frame * 0.8))
+    mouth = 8 + int(
+        22 * abs(math.sin(frame * 0.65))
     )
 
-    direction = 0
+    direction_angles = {
+        "right": 0,
+        "down": 90,
+        "left": 180,
+        "up": 270,
+    }
 
-    start = direction + mouth
-    end = direction + 360 - mouth
+    angle = direction_angles.get(
+        direction,
+        0
+    )
+
+    # Rotate the mouth around the movement direction
+    start = angle + mouth
+    end = angle + 360 - mouth
 
     draw.pieslice(
-        [
+        (
             cx - radius,
             cy - radius,
             cx + radius,
             cy + radius
-        ],
+        ),
         start=start,
         end=end,
         fill=YELLOW
     )
 
     # Eye
-    draw.ellipse(
-        [
-            cx + 2,
-            cy - 7,
-            cx + 5,
-            cy - 4
-        ],
-        fill=(10, 10, 10)
+    eye_angle = math.radians(
+        angle - 45
+    )
+
+    eye_x = int(
+        cx + math.cos(eye_angle) * 5
+    )
+
+    eye_y = int(
+        cy + math.sin(eye_angle) * 5
+    )
+
+    draw.rectangle(
+        (
+            eye_x - 2,
+            eye_y - 2,
+            eye_x + 2,
+            eye_y + 2
+        ),
+        fill=(15, 15, 15)
     )
 
 
-def draw_ghost(draw, cx, cy, color, frame):
+# ============================================================
+# DRAW GHOST
+# ============================================================
+
+def draw_ghost(
+    draw,
+    cx,
+    cy,
+    color,
+    frame
+):
 
     bounce = int(
-        2 * math.sin(frame * 0.4)
+        2 * math.sin(
+            frame * 0.20 + cx
+        )
     )
 
     cy += bounce
@@ -237,358 +289,742 @@ def draw_ghost(draw, cx, cy, color, frame):
 
     # Head
     draw.ellipse(
-        [
+        (
             cx - r,
             cy - r,
             cx + r,
             cy + r
-        ],
+        ),
         fill=color
     )
 
     # Body
     draw.rectangle(
-        [
+        (
             cx - r,
             cy,
             cx + r,
-            cy + 10
-        ],
+            cy + 9
+        ),
         fill=color
     )
 
     # Feet
-    for offset in (-7, 0, 7):
+    for offset in (-6, 0, 6):
+
         draw.polygon(
-            [
+            (
                 (cx + offset - 4, cy + 8),
                 (cx + offset, cy + 3),
                 (cx + offset + 4, cy + 8)
-            ],
+            ),
             fill=color
         )
 
     # Eyes
-    for ex in (-4, 4):
+    for offset in (-4, 4):
+
         draw.ellipse(
-            [
-                cx + ex - 2,
+            (
+                cx + offset - 2,
                 cy - 4,
-                cx + ex + 2,
+                cx + offset + 2,
                 cy
-            ],
+            ),
             fill=WHITE
         )
 
 
-def draw_cell(draw, date, eaten=False):
+# ============================================================
+# DRAW ACTIVITY CELL
+# ============================================================
 
-    count = calendar.get(date, 0)
+def draw_activity_cell(
+    draw,
+    date,
+    eaten=False,
+    eating_progress=0
+):
+
+    count = calendar.get(
+        date,
+        0
+    )
 
     x, y = cell_position(date)
 
+    # Empty day
     if count <= 0:
-        fill = GRID_EMPTY
 
-    elif count <= 2:
+        draw.rounded_rectangle(
+            (
+                x,
+                y,
+                x + CELL,
+                y + CELL
+            ),
+            radius=3,
+            fill=GRID_EMPTY
+        )
+
+        return
+
+
+    # Determine activity intensity
+    if count <= 2:
         fill = GREEN_1
-
     elif count <= 4:
         fill = GREEN_2
-
     else:
         fill = GREEN_3
 
-    # Current streak gets a brighter border
-    outline = None
 
-    if date in streak_dates:
-        outline = YELLOW_BRIGHT
+    # --------------------------------------------------------
+    # EATING ANIMATION
+    # --------------------------------------------------------
 
-    if eaten and count > 0:
-        fill = PANEL
+    if eaten:
 
-    rounded_rect(
-        draw,
-        [
+        if eating_progress >= 1:
+
+            # Fully consumed
+            fill = PANEL
+
+        else:
+
+            # Shrinking pellet
+            size = max(
+                2,
+                int(7 * (1 - eating_progress))
+            )
+
+            cx = x + CELL // 2
+            cy = y + CELL // 2
+
+            draw.ellipse(
+                (
+                    cx - size,
+                    cy - size,
+                    cx + size,
+                    cy + size
+                ),
+                fill=YELLOW_BRIGHT
+            )
+
+            return
+
+
+    # --------------------------------------------------------
+    # CELL
+    # --------------------------------------------------------
+
+    draw.rounded_rectangle(
+        (
             x,
             y,
             x + CELL,
             y + CELL
-        ],
-        3,
-        fill,
-        outline,
-        1
+        ),
+        radius=3,
+        fill=fill
     )
 
 
+    # Current streak highlight
+    if date in streak_dates:
+
+        draw.rounded_rectangle(
+            (
+                x - 1,
+                y - 1,
+                x + CELL + 1,
+                y + CELL + 1
+            ),
+            radius=4,
+            outline=YELLOW_BRIGHT,
+            width=1
+        )
+
+
 # ============================================================
-# PAC-MAN ROUTE
+# BUILD A CONTINUOUS PATH
 # ============================================================
 
-# Pac-Man scans the grid chronologically.
-# We reverse every second row to create a continuous arcade path.
+# Snake-style traversal across the calendar.
+#
+# Every row alternates direction, creating a continuous
+# left-right / right-left route.
 
 route = []
 
 for weekday in range(7):
 
     row_dates = [
-        d for d in dates
+        d
+        for d in dates
         if (d - grid_start).days % 7 == weekday
+        and d.year == year
     ]
 
-    if weekday % 2:
+    if weekday % 2 == 1:
         row_dates.reverse()
 
     route.extend(row_dates)
 
 
-# Only animate meaningful activity days.
+# Only active days are targets.
 targets = [
-    d for d in route
-    if calendar.get(d, 0) > 0
+    date
+    for date in route
+    if calendar.get(date, 0) > 0
 ]
 
 
 # ============================================================
-# CREATE FRAMES
+# PAC-MAN PATH
 # ============================================================
+
+# Convert each target into a screen coordinate.
+
+target_points = []
+
+for date in targets:
+
+    x, y = cell_position(date)
+
+    target_points.append(
+        (
+            x + CELL // 2,
+            y + CELL // 2,
+            date
+        )
+    )
+
+
+# ============================================================
+# INTERPOLATION
+# ============================================================
+
+def interpolate(
+    a,
+    b,
+    t
+):
+
+    return (
+        a[0] + (b[0] - a[0]) * t,
+        a[1] + (b[1] - a[1]) * t
+    )
+
+
+def direction_between(
+    a,
+    b
+):
+
+    dx = b[0] - a[0]
+    dy = b[1] - a[1]
+
+    if abs(dx) > abs(dy):
+
+        return (
+            "right"
+            if dx > 0
+            else "left"
+        )
+
+    return (
+        "down"
+        if dy > 0
+        else "up"
+    )
+
+
+# ============================================================
+# ANIMATION SETTINGS
+# ============================================================
+
+FRAMES_PER_TARGET = 8
+EAT_FRAMES = 3
 
 frames = []
 
-TOTAL_FRAMES = max(
-    100,
-    len(targets) * 7
-)
 
-for frame in range(TOTAL_FRAMES):
+# Intro frames
+INTRO_FRAMES = 18
+
+
+# ============================================================
+# INTRO
+# ============================================================
+
+for frame in range(INTRO_FRAMES):
 
     img = Image.new(
         "RGB",
-        (WIDTH, HEIGHT),
+        (
+            WIDTH,
+            HEIGHT
+        ),
         BG
     )
 
     draw = ImageDraw.Draw(img)
 
-    # --------------------------------------------------------
-    # HEADER
-    # --------------------------------------------------------
-
     draw.text(
-        (45, 28),
+        (
+            WIDTH // 2 - 145,
+            160
+        ),
         "LEETCODE",
         font=FONT_TITLE,
         fill=YELLOW
     )
 
     draw.text(
-        (48, 78),
+        (
+            WIDTH // 2 - 110,
+            220
+        ),
         "EAT • SOLVE • REPEAT",
         font=FONT_SUBTITLE,
         fill=MUTED
     )
 
+    # Blinking "READY"
+    if frame % 6 < 4:
+
+        draw.text(
+            (
+                WIDTH // 2 - 45,
+                280
+            ),
+            "READY",
+            font=FONT_NORMAL,
+            fill=GREEN_3
+        )
+
+    frames.append(img)
+
+
+# ============================================================
+# MAIN ANIMATION
+# ============================================================
+
+for target_index in range(
+    len(target_points)
+):
+
+    current = target_points[
+        target_index
+    ]
+
+    # Determine previous position
+    if target_index == 0:
+
+        previous = current
+
+    else:
+
+        previous = target_points[
+            target_index - 1
+        ]
+
+
+    x1, y1, _ = previous
+    x2, y2, current_date = current
+
+
+    direction = direction_between(
+        previous,
+        current
+    )
+
+
     # --------------------------------------------------------
-    # STATS
+    # MOVEMENT
     # --------------------------------------------------------
 
-    stats_x = 390
+    for local_frame in range(
+        FRAMES_PER_TARGET
+    ):
+
+        progress = (
+            local_frame /
+            FRAMES_PER_TARGET
+        )
+
+        # Smoothstep interpolation
+        smooth = (
+            progress *
+            progress *
+            (3 - 2 * progress)
+        )
+
+
+        px, py = interpolate(
+            (x1, y1),
+            (x2, y2),
+            smooth
+        )
+
+
+        img = Image.new(
+            "RGB",
+            (
+                WIDTH,
+                HEIGHT
+            ),
+            BG
+        )
+
+        draw = ImageDraw.Draw(img)
+
+
+        # ----------------------------------------------------
+        # HEADER
+        # ----------------------------------------------------
+
+        draw.text(
+            (45, 28),
+            "LEETCODE",
+            font=FONT_TITLE,
+            fill=YELLOW
+        )
+
+        draw.text(
+            (48, 78),
+            "EAT • SOLVE • REPEAT",
+            font=FONT_SUBTITLE,
+            fill=MUTED
+        )
+
+
+        draw.text(
+            (390, 35),
+            f"🔥 {streak} DAY STREAK",
+            font=FONT_STATS,
+            fill=YELLOW_BRIGHT
+        )
+
+        draw.text(
+            (390, 78),
+            f"ACTIVE DAYS  {active_days}",
+            font=FONT_SUBTITLE,
+            fill=GREEN_3
+        )
+
+        draw.text(
+            (1050, 38),
+            username,
+            font=FONT_SUBTITLE,
+            fill=WHITE
+        )
+
+        draw.text(
+            (1050, 75),
+            str(year),
+            font=FONT_SUBTITLE,
+            fill=MUTED
+        )
+
+
+        # ----------------------------------------------------
+        # PANEL
+        # ----------------------------------------------------
+
+        draw.rounded_rectangle(
+            (
+                30,
+                120,
+                WIDTH - 30,
+                430
+            ),
+            radius=10,
+            fill=PANEL,
+            outline=BLUE,
+            width=1
+        )
+
+
+        # ----------------------------------------------------
+        # MONTHS
+        # ----------------------------------------------------
+
+        month_positions = {}
+
+        for date in dates:
+
+            if (
+                date.year == year
+                and date.day == 1
+            ):
+
+                x, _ = cell_position(
+                    date
+                )
+
+                month_positions[
+                    date.month
+                ] = x
+
+
+        for month, x in month_positions.items():
+
+            month_name = datetime(
+                year,
+                month,
+                1
+            ).strftime("%b").upper()
+
+            draw.text(
+                (
+                    x,
+                    137
+                ),
+                month_name,
+                font=FONT_SMALL,
+                fill=MUTED
+            )
+
+
+        # ----------------------------------------------------
+        # WEEKDAYS
+        # ----------------------------------------------------
+
+        weekdays = [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI",
+            "SAT",
+            "SUN"
+        ]
+
+        for i, name in enumerate(
+            weekdays
+        ):
+
+            y = (
+                GRID_Y +
+                i * STEP
+            )
+
+            draw.text(
+                (
+                    40,
+                    y
+                ),
+                name,
+                font=FONT_SMALL,
+                fill=MUTED
+            )
+
+
+        # ----------------------------------------------------
+        # ACTIVITY GRID
+        # ----------------------------------------------------
+
+        for date in dates:
+
+            if date.year != year:
+                continue
+
+
+            # Has this target been eaten?
+            eaten = False
+            eating_progress = 0
+
+
+            if date in targets:
+
+                eaten_index = targets.index(
+                    date
+                )
+
+                if eaten_index < target_index:
+
+                    eaten = True
+                    eating_progress = 1
+
+                elif eaten_index == target_index:
+
+                    eaten = True
+
+                    eating_progress = (
+                        local_frame /
+                        FRAMES_PER_TARGET
+                    )
+
+
+            draw_activity_cell(
+                draw,
+                date,
+                eaten=eaten,
+                eating_progress=eating_progress
+            )
+
+
+        # ----------------------------------------------------
+        # PAC-MAN
+        # ----------------------------------------------------
+
+        draw_pacman(
+            draw,
+            int(px),
+            int(py),
+            direction,
+            local_frame + target_index
+        )
+
+
+        # ----------------------------------------------------
+        # GHOSTS
+        # ----------------------------------------------------
+
+        ghost_data = [
+            (
+                WIDTH - 170,
+                165,
+                RED
+            ),
+            (
+                WIDTH - 120,
+                225,
+                PINK
+            ),
+            (
+                WIDTH - 175,
+                290,
+                CYAN
+            )
+        ]
+
+        for gx, gy, color in ghost_data:
+
+            draw_ghost(
+                draw,
+                gx,
+                gy,
+                color,
+                local_frame + target_index
+            )
+
+
+        # ----------------------------------------------------
+        # FOOTER
+        # ----------------------------------------------------
+
+        draw.text(
+            (
+                45,
+                448
+            ),
+            "PAC-MAN IS EATING YOUR LEETCODE ACTIVITY",
+            font=FONT_SMALL,
+            fill=WHITE
+        )
+
+        draw.text(
+            (
+                WIDTH - 270,
+                448
+            ),
+            "AUTO UPDATED",
+            font=FONT_SMALL,
+            fill=GREEN_2
+        )
+
+
+        frames.append(img)
+
+
+# ============================================================
+# END SCREEN
+# ============================================================
+
+for frame in range(20):
+
+    img = Image.new(
+        "RGB",
+        (
+            WIDTH,
+            HEIGHT
+        ),
+        BG
+    )
+
+    draw = ImageDraw.Draw(img)
+
+    draw.rounded_rectangle(
+        (
+            30,
+            30,
+            WIDTH - 30,
+            HEIGHT - 30
+        ),
+        radius=15,
+        fill=PANEL,
+        outline=BLUE,
+        width=1
+    )
 
     draw.text(
-        (stats_x, 35),
-        f"STREAK  {streak} DAYS",
+        (
+            WIDTH // 2 - 145,
+            100
+        ),
+        "LEVEL COMPLETE",
+        font=FONT_TITLE,
+        fill=YELLOW
+    )
+
+    draw.text(
+        (
+            WIDTH // 2 - 125,
+            180
+        ),
+        f"🔥 {streak} DAY STREAK",
         font=FONT_STATS,
         fill=YELLOW_BRIGHT
     )
 
     draw.text(
-        (stats_x, 78),
-        f"ACTIVE DAYS  {active_days}",
+        (
+            WIDTH // 2 - 110,
+            230
+        ),
+        f"{active_days} ACTIVE DAYS",
         font=FONT_SUBTITLE,
         fill=GREEN_3
     )
 
     draw.text(
-        (stats_x + 360, 35),
-        username,
+        (
+            WIDTH // 2 - 125,
+            290
+        ),
+        "KEEP SOLVING!",
         font=FONT_SUBTITLE,
         fill=WHITE
     )
 
     draw.text(
-        (stats_x + 360, 78),
-        str(year),
-        font=FONT_SUBTITLE,
+        (
+            WIDTH // 2 - 120,
+            360
+        ),
+        "NEXT RUN LOADING...",
+        font=FONT_SMALL,
         fill=MUTED
-    )
-
-    # --------------------------------------------------------
-    # CALENDAR PANEL
-    # --------------------------------------------------------
-
-    rounded_rect(
-        draw,
-        (30, 120, WIDTH - 30, 430),
-        10,
-        PANEL,
-        BLUE,
-        1
-    )
-
-    # --------------------------------------------------------
-    # MONTH LABELS
-    # --------------------------------------------------------
-
-    month_positions = {}
-
-    for date in dates:
-
-        if date.day == 1:
-
-            x, y = cell_position(date)
-
-            month_positions[date.month] = x
-
-    for month, x in month_positions.items():
-
-        month_name = datetime(
-            year,
-            month,
-            1
-        ).strftime("%b").upper()
-
-        draw.text(
-            (x, 137),
-            month_name,
-            font=FONT_SMALL,
-            fill=MUTED
-        )
-
-    # --------------------------------------------------------
-    # WEEKDAY LABELS
-    # --------------------------------------------------------
-
-    weekdays = [
-        "MON",
-        "TUE",
-        "WED",
-        "THU",
-        "FRI",
-        "SAT",
-        "SUN"
-    ]
-
-    for i, name in enumerate(weekdays):
-
-        y = GRID_Y + i * STEP
-
-        draw.text(
-            (40, y),
-            name,
-            font=FONT_SMALL,
-            fill=MUTED
-        )
-
-    # --------------------------------------------------------
-    # DETERMINE EATEN CELLS
-    # --------------------------------------------------------
-
-    target_index = min(
-        len(targets),
-        frame // 7
-    )
-
-    eaten = set(
-        targets[:target_index]
-    )
-
-    # --------------------------------------------------------
-    # DRAW CALENDAR
-    # --------------------------------------------------------
-
-    for date in dates:
-
-        # Don't draw dates outside the year
-        if date.year != year:
-            continue
-
-        draw_cell(
-            draw,
-            date,
-            eaten=date in eaten
-        )
-
-    # --------------------------------------------------------
-    # PAC-MAN POSITION
-    # --------------------------------------------------------
-
-    if targets:
-
-        current_index = min(
-            len(targets) - 1,
-            frame // 7
-        )
-
-        current_date = targets[current_index]
-
-        x, y = cell_position(current_date)
-
-        cx = x + CELL // 2
-        cy = y + CELL // 2
-
-        draw_pacman(
-            draw,
-            cx,
-            cy,
-            frame
-        )
-
-    # --------------------------------------------------------
-    # GHOSTS
-    # --------------------------------------------------------
-
-    ghost_positions = [
-        (WIDTH - 180, 160, RED),
-        (WIDTH - 130, 230, PINK),
-        (WIDTH - 200, 300, CYAN)
-    ]
-
-    for gx, gy, color in ghost_positions:
-
-        draw_ghost(
-            draw,
-            gx,
-            gy,
-            color,
-            frame
-        )
-
-    # --------------------------------------------------------
-    # FOOTER
-    # --------------------------------------------------------
-
-    draw.text(
-        (45, 448),
-        "PAC-MAN IS EATING YOUR LEETCODE ACTIVITY",
-        font=FONT_SMALL,
-        fill=WHITE
-    )
-
-    draw.text(
-        (WIDTH - 300, 448),
-        "UPDATED AUTOMATICALLY",
-        font=FONT_SMALL,
-        fill=GREEN_2
     )
 
     frames.append(img)
 
 
 # ============================================================
-# SAVE GIF
+# SAVE
 # ============================================================
 
 OUTPUT_DIR.mkdir(
@@ -596,21 +1032,36 @@ OUTPUT_DIR.mkdir(
     exist_ok=True
 )
 
-frames[0].save(
+
+# Quantize frames to keep GIF size reasonable.
+optimized_frames = []
+
+for frame in frames:
+
+    optimized_frames.append(
+        frame.quantize(
+            colors=128,
+            method=Image.Quantize.MEDIANCUT
+        )
+    )
+
+
+optimized_frames[0].save(
     OUTPUT_FILE,
     save_all=True,
-    append_images=frames[1:],
-    duration=90,
+    append_images=optimized_frames[1:],
+    duration=80,
     loop=0,
     optimize=True
 )
 
+
 print()
 print("========================================")
-print("       PAC-MAN GENERATED")
+print("       PAC-MAN V2 GENERATED")
 print("========================================")
 print(f"Output : {OUTPUT_FILE}")
-print(f"Frames : {len(frames)}")
+print(f"Frames : {len(optimized_frames)}")
 print(f"Streak : {streak} days")
 print(f"Active : {active_days} days")
 print("========================================")
